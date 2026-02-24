@@ -200,7 +200,6 @@ async function submitAll() {
   saveAllRecords(recs);
   renderRecords();
   document.getElementById('btn-sub').disabled = false;
-  if (submitWin && !submitWin.closed) submitWin.close();
   loginOpened = false;
   if (fail === 0) {
     showStatus(`✅ נשלחו ${ok} רשומות — בדוק ב-Isufit שהנתונים עודכנו`, 'ok');
