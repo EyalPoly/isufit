@@ -55,8 +55,6 @@
     .rec-row .times { color: white; }
     .rec-row .del { color: #e74c3c; cursor: pointer; padding: 2px 6px; }
     .rec-row.submitted { opacity: 0.5; }
-    #config-link { margin-top: 16px; font-size: 0.78em; color: #555; }
-    #config-link a { color: #a0c4ff; }
     .badge {
       display: inline-block; background: #e74c3c;
       color: white; border-radius: 10px; font-size: 0.7em;
@@ -83,15 +81,9 @@
   <div id="records-list"></div>
 </div>
 
-<div id="config-link">
-  עובד: <strong id="display-worker"></strong> |
-  <a href="#" onclick="showConfig()">הגדרות</a>
-</div>
 
 <script>
 const ISUFIT = 'https://extisufit.ngsoft.com/isufit';
-let workerCode = localStorage.getItem('isufit_worker') || '4282';
-document.getElementById('display-worker').textContent = workerCode;
 
 // ── Clock ──────────────────────────────────────────
 function tick() {
@@ -179,7 +171,7 @@ async function submitAll() {
 
 async function sendRecord(date, tbName, value) {
   const url = `${ISUFIT}/ops/opSaveTBChange.aspx` +
-    `?workerCode=${workerCode}&forDate=${date}&tbName=${tbName}` +
+    `?forDate=${date}&tbName=${tbName}` +
     `&newVal=${encodeURIComponent(value)}&caller=main`;
   try {
     const resp = await fetch(url, { credentials: 'include' });
@@ -246,15 +238,6 @@ function deleteRecord(date) {
   renderRecords();
 }
 
-function showConfig() {
-  const code = prompt('קוד עובד (Worker Code):', workerCode);
-  if (code && code.trim()) {
-    workerCode = code.trim();
-    localStorage.setItem('isufit_worker', workerCode);
-    document.getElementById('display-worker').textContent = workerCode;
-    showStatus('✅ קוד עובד עודכן', 'ok');
-  }
-}
 
 // Init
 updateBadge();
