@@ -1,260 +1,263 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2575.7">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="שעון נוכחות">
+  <title>שעון נוכחות</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #1a1a2e;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 { font-size: 1.3em; margin: 20px 0 4px; color: #a0c4ff; }
+    #clock { font-size: 3em; font-weight: bold; margin: 10px 0; letter-spacing: 3px; }
+    #date-display { font-size: 0.9em; color: #aaa; margin-bottom: 20px; }
+    .btn {
+      width: 100%; max-width: 340px;
+      padding: 20px; font-size: 1.2em; font-weight: bold;
+      border: none; border-radius: 14px; cursor: pointer;
+      margin: 8px 0; transition: transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; }
+    #btn-in   { background: #27ae60; color: white; }
+    #btn-out  { background: #e74c3c; color: white; }
+    #btn-sub  { background: #2980b9; color: white; margin-top: 16px; }
+    #btn-view { background: #555; color: white; font-size: 0.9em; padding: 12px; }
+    #status {
+      margin: 12px 0; padding: 12px 16px; border-radius: 10px;
+      font-size: 0.95em; text-align: center;
+      max-width: 340px; width: 100%; display: none;
+    }
+    #status.ok  { background:#1e3a2e; border:1px solid #27ae60; color:#27ae60; }
+    #status.err { background:#3a1e1e; border:1px solid #e74c3c; color:#e74c3c; }
+    #status.info{ background:#1e2a3a; border:1px solid #2980b9; color:#7fb3d3; }
+    #records-panel {
+      width: 100%; max-width: 340px;
+      background: #252540; border-radius: 12px;
+      margin-top: 14px; overflow: hidden; display: none;
+    }
+    #records-panel h3 { padding: 10px 14px; background: #333; font-size: 0.95em; }
+    .rec-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 14px; border-bottom: 1px solid #333; font-size: 0.88em;
+    }
+    .rec-row .date { color: #aaa; }
+    .rec-row .times { color: white; }
+    .rec-row .del { color: #e74c3c; cursor: pointer; padding: 2px 6px; }
+    .rec-row.submitted { opacity: 0.5; }
+    #config-link { margin-top: 16px; font-size: 0.78em; color: #555; }
+    #config-link a { color: #a0c4ff; }
+    .badge {
+      display: inline-block; background: #e74c3c;
+      color: white; border-radius: 10px; font-size: 0.7em;
+      padding: 2px 7px; margin-right: 6px; vertical-align: middle;
+    }
   </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="he" dir="rtl"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="apple-mobile-web-app-capable" content="yes"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="apple-mobile-web-app-title" content="שעון נוכחות"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;שעון נוכחות&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>* { box-sizing: border-box; margin: 0; padding: 0; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-family: Arial, sans-serif;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #1a1a2e;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color: white;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>min-height: 100vh;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>flex-direction: column;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>h1 { font-size: 1.3em; margin: 20px 0 4px; color: #a0c4ff; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#clock { font-size: 3em; font-weight: bold; margin: 10px 0; letter-spacing: 3px; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#date-display { font-size: 0.9em; color: #aaa; margin-bottom: 20px; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.btn {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 100%; max-width: 340px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 20px; font-size: 1.2em; font-weight: bold;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: none; border-radius: 14px; cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin: 8px 0; transition: transform 0.1s;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.btn:active { transform: scale(0.97); }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.btn:disabled { opacity: 0.4; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#btn-in <span class="Apple-converted-space">  </span>{ background: #27ae60; color: white; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#btn-out<span class="Apple-converted-space">  </span>{ background: #e74c3c; color: white; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#btn-sub<span class="Apple-converted-space">  </span>{ background: #2980b9; color: white; margin-top: 16px; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#btn-view { background: #555; color: white; font-size: 0.9em; padding: 12px; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#status {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin: 12px 0; padding: 12px 16px; border-radius: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size: 0.95em; text-align: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>max-width: 340px; width: 100%; display: none;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#status.ok<span class="Apple-converted-space">  </span>{ background:#1e3a2e; border:1px solid #27ae60; color:#27ae60; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#status.err { background:#3a1e1e; border:1px solid #e74c3c; color:#e74c3c; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#status.info{ background:#1e2a3a; border:1px solid #2980b9; color:#7fb3d3; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#records-panel {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 100%; max-width: 340px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #252540; border-radius: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-top: 14px; overflow: hidden; display: none;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#records-panel h3 { padding: 10px 14px; background: #333; font-size: 0.95em; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.rec-row {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex; justify-content: space-between; align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 8px 14px; border-bottom: 1px solid #333; font-size: 0.88em;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.rec-row .date { color: #aaa; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.rec-row .times { color: white; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.rec-row .del { color: #e74c3c; cursor: pointer; padding: 2px 6px; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.rec-row.submitted { opacity: 0.5; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#config-link { margin-top: 16px; font-size: 0.78em; color: #555; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#config-link a { color: #a0c4ff; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.badge {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: inline-block; background: #e74c3c;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color: white; border-radius: 10px; font-size: 0.7em;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 2px 7px; margin-right: 6px; vertical-align: middle;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1">&lt;h1&gt;⏱ שעון נוכחות&lt;/h1&gt;</p>
-<p class="p1">&lt;div id="clock"&gt;--:--:--&lt;/div&gt;</p>
-<p class="p1">&lt;div id="date-display"&gt;&lt;/div&gt;</p>
-<p class="p1">&lt;button class="btn" id="btn-in"<span class="Apple-converted-space">  </span>onclick="punch('IN')"&gt;🟢 כניסה&lt;/button&gt;</p>
-<p class="p1">&lt;button class="btn" id="btn-out" onclick="punch('OUT')"&gt;🔴 יציאה&lt;/button&gt;</p>
-<p class="p1">&lt;div id="status"&gt;&lt;/div&gt;</p>
-<p class="p1">&lt;button class="btn" id="btn-sub" onclick="submitAll()"&gt;</p>
-<p dir="rtl" class="p1"><span class="Apple-converted-space">  </span>📤 שלח ל-Isufit &lt;span id="pending-badge" class="badge" style="display:none"&gt;0&lt;/span&gt;</p>
-<p class="p1">&lt;/button&gt;</p>
-<p class="p1">&lt;button class="btn" id="btn-view" onclick="toggleRecords()"&gt;📋 הצג רשומות שמורות&lt;/button&gt;</p>
-<p class="p1">&lt;div id="records-panel"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;h3&gt;רשומות שמורות&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="records-list"&gt;&lt;/div&gt;</p>
-<p class="p1">&lt;/div&gt;</p>
-<p class="p1">&lt;div id="config-link"&gt;</p>
-<p dir="rtl" class="p1"><span class="Apple-converted-space">  </span>עובד: &lt;strong id="display-worker"&gt;&lt;/strong&gt; |</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;a href="#" onclick="showConfig()"&gt;הגדרות&lt;/a&gt;</p>
-<p class="p1">&lt;/div&gt;</p>
-<p class="p1">&lt;script&gt;</p>
-<p class="p1">const ISUFIT = 'https://extisufit.ngsoft.com/isufit';</p>
-<p class="p1">let workerCode = localStorage.getItem('isufit_worker') || '4282';</p>
-<p class="p1">document.getElementById('display-worker').textContent = workerCode;</p>
-<p class="p1">// ── Clock ──────────────────────────────────────────</p>
-<p class="p1">function tick() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const n = new Date();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const pad = x =&gt; String(x).padStart(2,'0');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>document.getElementById('clock').textContent =</p>
-<p class="p1"><span class="Apple-converted-space">    </span>`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const days = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const months = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני',</p>
-<p dir="rtl" class="p1"><span class="Apple-converted-space">                  </span>'יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];</p>
-<p class="p1"><span class="Apple-converted-space">  </span>document.getElementById('date-display').textContent =</p>
-<p dir="rtl" class="p1"><span class="Apple-converted-space">    </span>`יום ${days[n.getDay()]}, ${n.getDate()} ${months[n.getMonth()]} ${n.getFullYear()}`;</p>
-<p class="p1">}</p>
-<p class="p1">setInterval(tick, 1000); tick();</p>
-<p class="p1">// ── Helpers ────────────────────────────────────────</p>
-<p class="p1">function todayKey() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const n = new Date();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${n.getDate()}`;</p>
-<p class="p1">}</p>
-<p class="p1">function nowHHMM() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const n = new Date();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;</p>
-<p class="p1">}</p>
-<p class="p1">function getAllRecords() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>return JSON.parse(localStorage.getItem('isufit_records') || '{}');</p>
-<p class="p1">}</p>
-<p class="p1">function saveAllRecords(obj) {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>localStorage.setItem('isufit_records', JSON.stringify(obj));</p>
-<p class="p1"><span class="Apple-converted-space">  </span>updateBadge();</p>
-<p class="p1">}</p>
-<p class="p1">// ── Punch ──────────────────────────────────────────</p>
-<p class="p1">function punch(type) {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const key <span class="Apple-converted-space">  </span>= todayKey();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const time<span class="Apple-converted-space">  </span>= nowHHMM();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const recs<span class="Apple-converted-space">  </span>= getAllRecords();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (!recs[key]) recs[key] = { in: '', out: '', submitted: false };</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (type === 'IN') {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>recs[key].in = time;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>showStatus(`✅ כניסה נשמרה: ${time}`, 'ok');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>recs[key].out = time;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>showStatus(`✅ יציאה נשמרה: ${time}`, 'ok');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>saveAllRecords(recs);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>renderRecords();</p>
-<p class="p1">}</p>
-<p class="p1">// ── Submit all ─────────────────────────────────────</p>
-<p class="p1">async function submitAll() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const recs = getAllRecords();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const pending = Object.entries(recs).filter(([,v]) =&gt; !v.submitted &amp;&amp; (v.in || v.out));</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (pending.length === 0) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>showStatus('אין רשומות חדשות לשליחה', 'info');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>showStatus(`⏳ שולח ${pending.length} ימים...`, 'info');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>document.getElementById('btn-sub').disabled = true;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>let ok = 0, fail = 0;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>for (const [date, rec] of pending) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (rec.in) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const success = await sendRecord(date, 'IN122', rec.in);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (success) ok++; else fail++;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (rec.out) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const success = await sendRecord(date, 'OUT122', rec.out);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (success) ok++; else fail++;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (fail === 0) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>recs[date].submitted = true;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>await sleep(200); // small delay between requests</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>saveAllRecords(recs);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>renderRecords();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>document.getElementById('btn-sub').disabled = false;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (fail === 0) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>showStatus(`✅ נשלחו ${ok} רשומות בהצלחה!`, 'ok');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>showStatus(`⚠️ ${ok} הצליחו, ${fail} נכשלו. האם אתה מחובר ל-Isufit?`, 'err');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>openIsufitLogin();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1">}</p>
-<p class="p1">async function sendRecord(date, tbName, value) {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const url = `${ISUFIT}/ops/opSaveTBChange.aspx` +</p>
-<p class="p1"><span class="Apple-converted-space">    </span>`?workerCode=${workerCode}&amp;forDate=${date}&amp;tbName=${tbName}` +</p>
-<p class="p1"><span class="Apple-converted-space">    </span>`&amp;newVal=${encodeURIComponent(value)}&amp;caller=main`;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>try {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const resp = await fetch(url, { credentials: 'include' });</p>
-<p class="p1"><span class="Apple-converted-space">    </span>return resp.ok;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>} catch (e) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>return false;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1">}</p>
-<p class="p1">function openIsufitLogin() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Open login in new tab — after login, user comes back here and retries</p>
-<p class="p1"><span class="Apple-converted-space">  </span>showStatus('🔐 מתחבר ל-Isufit... אחרי ההתחברות חזור וסיים שוב "שלח"', 'info');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>window.open(`${ISUFIT}/login.aspx`, '_blank');</p>
-<p class="p1">}</p>
-<p class="p1">function sleep(ms) { return new Promise(r =&gt; setTimeout(r, ms)); }</p>
-<p class="p1">// ── UI helpers ─────────────────────────────────────</p>
-<p class="p1">function showStatus(msg, type) {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const el = document.getElementById('status');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>el.textContent = msg; el.className = type; el.style.display = 'block';</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (type !== 'err') setTimeout(() =&gt; el.style.display = 'none', 5000);</p>
-<p class="p1">}</p>
-<p class="p1">function updateBadge() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const recs = getAllRecords();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const count = Object.values(recs).filter(v =&gt; !v.submitted &amp;&amp; (v.in || v.out)).length;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const badge = document.getElementById('pending-badge');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>badge.textContent = count;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>badge.style.display = count &gt; 0 ? 'inline-block' : 'none';</p>
-<p class="p1">}</p>
-<p class="p1">function toggleRecords() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const panel = document.getElementById('records-panel');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>panel.style.display = panel.style.display === 'block' ? 'none' : 'block';</p>
-<p class="p1"><span class="Apple-converted-space">  </span>renderRecords();</p>
-<p class="p1">}</p>
-<p class="p1">function renderRecords() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const recs = getAllRecords();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const list = document.getElementById('records-list');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>list.innerHTML = '';</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const sorted = Object.keys(recs).sort().reverse();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (sorted.length === 0) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>list.innerHTML = '&lt;div class="rec-row" style="color:#666"&gt;אין רשומות&lt;/div&gt;';</p>
-<p class="p1"><span class="Apple-converted-space">    </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>for (const date of sorted) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const r = recs[date];</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const row = document.createElement('div');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>row.className = 'rec-row' + (r.submitted ? ' submitted' : '');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>row.innerHTML = `</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;span class="date"&gt;${date} ${r.submitted ? '✓' : ''}&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;span class="times"&gt;🟢 ${r.in||'--'} &amp;nbsp; 🔴 ${r.out||'--'}&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;span class="del" onclick="deleteRecord('${date}')"&gt;✕&lt;/span&gt;`;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>list.appendChild(row);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1">}</p>
-<p class="p1">function deleteRecord(date) {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (!confirm(`מחק רשומה לתאריך ${date}?`)) return;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const recs = getAllRecords();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>delete recs[date];</p>
-<p class="p1"><span class="Apple-converted-space">  </span>saveAllRecords(recs);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>renderRecords();</p>
-<p class="p1">}</p>
-<p class="p1">function showConfig() {</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const code = prompt('קוד עובד (Worker Code):', workerCode);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>if (code &amp;&amp; code.trim()) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>workerCode = code.trim();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>localStorage.setItem('isufit_worker', workerCode);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>document.getElementById('display-worker').textContent = workerCode;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>showStatus('✅ קוד עובד עודכן', 'ok');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p1">}</p>
-<p class="p1">// Init</p>
-<p class="p1">updateBadge();</p>
-<p class="p1">&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+<h1>⏱ שעון נוכחות</h1>
+<div id="clock">--:--:--</div>
+<div id="date-display"></div>
+
+<button class="btn" id="btn-in"  onclick="punch('IN')">🟢 כניסה</button>
+<button class="btn" id="btn-out" onclick="punch('OUT')">🔴 יציאה</button>
+<div id="status"></div>
+
+<button class="btn" id="btn-sub" onclick="submitAll()">
+  📤 שלח ל-Isufit <span id="pending-badge" class="badge" style="display:none">0</span>
+</button>
+<button class="btn" id="btn-view" onclick="toggleRecords()">📋 הצג רשומות שמורות</button>
+
+<div id="records-panel">
+  <h3>רשומות שמורות</h3>
+  <div id="records-list"></div>
+</div>
+
+<div id="config-link">
+  עובד: <strong id="display-worker"></strong> |
+  <a href="#" onclick="showConfig()">הגדרות</a>
+</div>
+
+<script>
+const ISUFIT = 'https://extisufit.ngsoft.com/isufit';
+let workerCode = localStorage.getItem('isufit_worker') || '4282';
+document.getElementById('display-worker').textContent = workerCode;
+
+// ── Clock ──────────────────────────────────────────
+function tick() {
+  const n = new Date();
+  const pad = x => String(x).padStart(2,'0');
+  document.getElementById('clock').textContent =
+    `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  const days = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  const months = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני',
+                  'יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  document.getElementById('date-display').textContent =
+    `יום ${days[n.getDay()]}, ${n.getDate()} ${months[n.getMonth()]} ${n.getFullYear()}`;
+}
+setInterval(tick, 1000); tick();
+
+// ── Helpers ────────────────────────────────────────
+function todayKey() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${n.getDate()}`;
+}
+function nowHHMM() {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+}
+function getAllRecords() {
+  return JSON.parse(localStorage.getItem('isufit_records') || '{}');
+}
+function saveAllRecords(obj) {
+  localStorage.setItem('isufit_records', JSON.stringify(obj));
+  updateBadge();
+}
+
+// ── Punch ──────────────────────────────────────────
+function punch(type) {
+  const key   = todayKey();
+  const time  = nowHHMM();
+  const recs  = getAllRecords();
+  if (!recs[key]) recs[key] = { in: '', out: '', submitted: false };
+  if (type === 'IN') {
+    recs[key].in = time;
+    showStatus(`✅ כניסה נשמרה: ${time}`, 'ok');
+  } else {
+    recs[key].out = time;
+    showStatus(`✅ יציאה נשמרה: ${time}`, 'ok');
+  }
+  saveAllRecords(recs);
+  renderRecords();
+}
+
+// ── Submit all ─────────────────────────────────────
+async function submitAll() {
+  const recs = getAllRecords();
+  const pending = Object.entries(recs).filter(([,v]) => !v.submitted && (v.in || v.out));
+  if (pending.length === 0) {
+    showStatus('אין רשומות חדשות לשליחה', 'info');
+    return;
+  }
+  showStatus(`⏳ שולח ${pending.length} ימים...`, 'info');
+  document.getElementById('btn-sub').disabled = true;
+  let ok = 0, fail = 0;
+  for (const [date, rec] of pending) {
+    if (rec.in) {
+      const success = await sendRecord(date, 'IN122', rec.in);
+      if (success) ok++; else fail++;
+    }
+    if (rec.out) {
+      const success = await sendRecord(date, 'OUT122', rec.out);
+      if (success) ok++; else fail++;
+    }
+    if (fail === 0) {
+      recs[date].submitted = true;
+    }
+    await sleep(200);
+  }
+  saveAllRecords(recs);
+  renderRecords();
+  document.getElementById('btn-sub').disabled = false;
+  if (fail === 0) {
+    showStatus(`✅ נשלחו ${ok} רשומות בהצלחה!`, 'ok');
+  } else {
+    showStatus(`⚠️ ${ok} הצליחו, ${fail} נכשלו. האם אתה מחובר ל-Isufit?`, 'err');
+    openIsufitLogin();
+  }
+}
+
+async function sendRecord(date, tbName, value) {
+  const url = `${ISUFIT}/ops/opSaveTBChange.aspx` +
+    `?workerCode=${workerCode}&forDate=${date}&tbName=${tbName}` +
+    `&newVal=${encodeURIComponent(value)}&caller=main`;
+  try {
+    const resp = await fetch(url, { credentials: 'include' });
+    return resp.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+function openIsufitLogin() {
+  showStatus('🔐 מתחבר ל-Isufit... אחרי ההתחברות חזור וסיים שוב "שלח"', 'info');
+  window.open(`${ISUFIT}/login.aspx`, '_blank');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── UI helpers ─────────────────────────────────────
+function showStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg; el.className = type; el.style.display = 'block';
+  if (type !== 'err') setTimeout(() => el.style.display = 'none', 5000);
+}
+
+function updateBadge() {
+  const recs = getAllRecords();
+  const count = Object.values(recs).filter(v => !v.submitted && (v.in || v.out)).length;
+  const badge = document.getElementById('pending-badge');
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'inline-block' : 'none';
+}
+
+function toggleRecords() {
+  const panel = document.getElementById('records-panel');
+  panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  renderRecords();
+}
+
+function renderRecords() {
+  const recs = getAllRecords();
+  const list = document.getElementById('records-list');
+  list.innerHTML = '';
+  const sorted = Object.keys(recs).sort().reverse();
+  if (sorted.length === 0) {
+    list.innerHTML = '<div class="rec-row" style="color:#666">אין רשומות</div>';
+    return;
+  }
+  for (const date of sorted) {
+    const r = recs[date];
+    const row = document.createElement('div');
+    row.className = 'rec-row' + (r.submitted ? ' submitted' : '');
+    row.innerHTML = `
+      <span class="date">${date} ${r.submitted ? '✓' : ''}</span>
+      <span class="times">🟢 ${r.in||'--'} &nbsp; 🔴 ${r.out||'--'}</span>
+      <span class="del" onclick="deleteRecord('${date}')">✕</span>`;
+    list.appendChild(row);
+  }
+}
+
+function deleteRecord(date) {
+  if (!confirm(`מחק רשומה לתאריך ${date}?`)) return;
+  const recs = getAllRecords();
+  delete recs[date];
+  saveAllRecords(recs);
+  renderRecords();
+}
+
+function showConfig() {
+  const code = prompt('קוד עובד (Worker Code):', workerCode);
+  if (code && code.trim()) {
+    workerCode = code.trim();
+    localStorage.setItem('isufit_worker', workerCode);
+    document.getElementById('display-worker').textContent = workerCode;
+    showStatus('✅ קוד עובד עודכן', 'ok');
+  }
+}
+
+// Init
+updateBadge();
+</script>
 </body>
 </html>
