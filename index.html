@@ -29,6 +29,7 @@
     }
     .btn:active { transform: scale(0.97); }
     .btn:disabled { opacity: 0.4; }
+    #btn-login { background: #8e44ad; color: white; }
     #btn-in   { background: #27ae60; color: white; }
     #btn-out  { background: #e74c3c; color: white; }
     #btn-sub  { background: #2980b9; color: white; margin-top: 16px; }
@@ -67,6 +68,7 @@
 <div id="clock">--:--:--</div>
 <div id="date-display"></div>
 
+<button class="btn" id="btn-login" onclick="openIsufitLogin()">🔐 התחבר ל-Isufit</button>
 <button class="btn" id="btn-in"  onclick="punch('IN')">🟢 כניסה</button>
 <button class="btn" id="btn-out" onclick="punch('OUT')">🔴 יציאה</button>
 <div id="status"></div>
@@ -169,20 +171,33 @@ async function submitAll() {
   }
 }
 
-async function sendRecord(date, tbName, value) {
+function sendRecord(date, tbName, value) {
   const url = `${ISUFIT}/ops/opSaveTBChange.aspx` +
     `?forDate=${date}&tbName=${tbName}` +
     `&newVal=${encodeURIComponent(value)}&caller=main`;
-  try {
-    const resp = await fetch(url, { credentials: 'include' });
-    return resp.ok;
-  } catch (e) {
-    return false;
-  }
+  return new Promise(resolve => {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = url;
+    iframe.onload = () => {
+      resolve(true);
+      setTimeout(() => iframe.remove(), 500);
+    };
+    iframe.onerror = () => {
+      resolve(false);
+      iframe.remove();
+    };
+    document.body.appendChild(iframe);
+    setTimeout(() => {
+      if (iframe.parentNode) {
+        iframe.remove();
+        resolve(false);
+      }
+    }, 10000);
+  });
 }
 
 function openIsufitLogin() {
-  showStatus('🔐 מתחבר ל-Isufit... אחרי ההתחברות חזור וסיים שוב "שלח"', 'info');
   window.open(`${ISUFIT}/login.aspx`, '_blank');
 }
 
