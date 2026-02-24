@@ -104,7 +104,7 @@ setInterval(tick, 1000); tick();
 // ── Helpers ────────────────────────────────────────
 function todayKey() {
   const n = new Date();
-  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${n.getDate()}`;
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
 }
 function nowHHMM() {
   const n = new Date();
@@ -143,28 +143,42 @@ async function submitAll() {
     showStatus('אין רשומות חדשות לשליחה', 'info');
     return;
   }
+
+  const submitWin = window.open('about:blank', 'isufit_submit');
+  if (!submitWin) {
+    showStatus('⚠️ נא לאפשר חלונות קופצים (popups) לאתר זה ולנסות שוב', 'err');
+    return;
+  }
+
   showStatus(`⏳ שולח ${pending.length} ימים...`, 'info');
   document.getElementById('btn-sub').disabled = true;
   let ok = 0, fail = 0;
   for (const [date, rec] of pending) {
+    if (submitWin.closed) {
+      showStatus('⚠️ חלון השליחה נסגר. נא לנסות שוב', 'err');
+      fail++;
+      break;
+    }
     if (rec.in) {
-      const success = await sendRecord(date, 'IN122', rec.in);
+      const success = sendRecord(date, 'IN122', rec.in);
       if (success) ok++; else fail++;
+      await sleep(1200);
     }
     if (rec.out) {
-      const success = await sendRecord(date, 'OUT122', rec.out);
+      const success = sendRecord(date, 'OUT122', rec.out);
       if (success) ok++; else fail++;
+      await sleep(1200);
     }
     if (fail === 0) {
       recs[date].submitted = true;
     }
-    await sleep(200);
   }
   saveAllRecords(recs);
   renderRecords();
   document.getElementById('btn-sub').disabled = false;
+  if (submitWin && !submitWin.closed) submitWin.close();
   if (fail === 0) {
-    showStatus(`✅ נשלחו ${ok} רשומות בהצלחה!`, 'ok');
+    showStatus(`✅ נשלחו ${ok} רשומות — בדוק ב-Isufit שהנתונים עודכנו`, 'ok');
   } else {
     showStatus(`⚠️ ${ok} הצליחו, ${fail} נכשלו. האם אתה מחובר ל-Isufit?`, 'err');
     openIsufitLogin();
@@ -172,29 +186,24 @@ async function submitAll() {
 }
 
 function sendRecord(date, tbName, value) {
-  const url = `${ISUFIT}/ops/opSaveTBChange.aspx` +
-    `?forDate=${date}&tbName=${tbName}` +
-    `&newVal=${encodeURIComponent(value)}&caller=main`;
-  return new Promise(resolve => {
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = url;
-    iframe.onload = () => {
-      resolve(true);
-      setTimeout(() => iframe.remove(), 500);
-    };
-    iframe.onerror = () => {
-      resolve(false);
-      iframe.remove();
-    };
-    document.body.appendChild(iframe);
-    setTimeout(() => {
-      if (iframe.parentNode) {
-        iframe.remove();
-        resolve(false);
-      }
-    }, 10000);
-  });
+  try {
+    const form = document.createElement('form');
+    form.method = 'GET';
+    form.action = `${ISUFIT}/ops/opSaveTBChange.aspx`;
+    form.target = 'isufit_submit';
+    form.style.display = 'none';
+    [['forDate', date], ['tbName', tbName], ['newVal', value], ['caller', 'main']].forEach(([n, v]) => {
+      const inp = document.createElement('input');
+      inp.type = 'hidden'; inp.name = n; inp.value = v;
+      form.appendChild(inp);
+    });
+    document.body.appendChild(form);
+    form.submit();
+    form.remove();
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 function openIsufitLogin() {
