@@ -200,6 +200,10 @@ async function submitAll() {
   saveAllRecords(recs);
   renderRecords();
   document.getElementById('btn-sub').disabled = false;
+  // Navigate popup back to Isufit main page so user can verify
+  if (submitWin && !submitWin.closed) {
+    window.open(`${ISUFIT}/default.aspx`, 'isufit_submit');
+  }
   loginOpened = false;
   if (fail === 0) {
     showStatus(`✅ נשלחו ${ok} רשומות — בדוק ב-Isufit שהנתונים עודכנו`, 'ok');
