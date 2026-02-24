@@ -195,8 +195,7 @@ async function submitAll() {
   saveAllRecords(recs);
   renderRecords();
   document.getElementById('btn-sub').disabled = false;
-  console.log('[isufit] done. ok:', ok, 'fail:', fail, 'closing popup');
-  if (submitWin && !submitWin.closed) submitWin.close();
+  console.log('[isufit] done. ok:', ok, 'fail:', fail, '— keeping popup open for inspection');
   loginOpened = false;
   if (fail === 0) {
     showStatus(`✅ נשלחו ${ok} רשומות — בדוק ב-Isufit שהנתונים עודכנו`, 'ok');
