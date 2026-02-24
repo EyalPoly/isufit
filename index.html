@@ -29,7 +29,6 @@
     }
     .btn:active { transform: scale(0.97); }
     .btn:disabled { opacity: 0.4; }
-    #btn-login { background: #8e44ad; color: white; }
     #btn-in   { background: #27ae60; color: white; }
     #btn-out  { background: #e74c3c; color: white; }
     #btn-sub  { background: #2980b9; color: white; margin-top: 16px; }
@@ -68,7 +67,6 @@
 <div id="clock">--:--:--</div>
 <div id="date-display"></div>
 
-<button class="btn" id="btn-login" onclick="openIsufitLogin()">🔐 התחבר ל-Isufit</button>
 <button class="btn" id="btn-in"  onclick="punch('IN')">🟢 כניסה</button>
 <button class="btn" id="btn-out" onclick="punch('OUT')">🔴 יציאה</button>
 <div id="status"></div>
@@ -86,6 +84,7 @@
 
 <script>
 const ISUFIT = 'https://extisufit.ngsoft.com/isufit';
+let loginOpened = false;
 
 // ── Clock ──────────────────────────────────────────
 function tick() {
@@ -144,9 +143,20 @@ async function submitAll() {
     return;
   }
 
+  if (!loginOpened) {
+    const win = window.open(`${ISUFIT}/login.aspx`, 'isufit_submit');
+    if (!win) {
+      showStatus('⚠️ נא לאפשר חלונות קופצים (popups) לאתר זה', 'err');
+      return;
+    }
+    loginOpened = true;
+    showStatus('🔐 התחבר ל-Isufit בחלון שנפתח, ואז לחץ שוב על "שלח"', 'info', true);
+    return;
+  }
+
   const submitWin = window.open('about:blank', 'isufit_submit');
   if (!submitWin) {
-    showStatus('⚠️ נא לאפשר חלונות קופצים (popups) לאתר זה ולנסות שוב', 'err');
+    showStatus('⚠️ נא לאפשר חלונות קופצים (popups) לאתר זה', 'err');
     return;
   }
 
@@ -177,11 +187,11 @@ async function submitAll() {
   renderRecords();
   document.getElementById('btn-sub').disabled = false;
   if (submitWin && !submitWin.closed) submitWin.close();
+  loginOpened = false;
   if (fail === 0) {
     showStatus(`✅ נשלחו ${ok} רשומות — בדוק ב-Isufit שהנתונים עודכנו`, 'ok');
   } else {
-    showStatus(`⚠️ ${ok} הצליחו, ${fail} נכשלו. האם אתה מחובר ל-Isufit?`, 'err');
-    openIsufitLogin();
+    showStatus(`⚠️ ${ok} הצליחו, ${fail} נכשלו. נסה שוב`, 'err');
   }
 }
 
@@ -206,17 +216,13 @@ function sendRecord(date, tbName, value) {
   }
 }
 
-function openIsufitLogin() {
-  window.open(`${ISUFIT}/login.aspx`, '_blank');
-}
-
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ── UI helpers ─────────────────────────────────────
-function showStatus(msg, type) {
+function showStatus(msg, type, persist) {
   const el = document.getElementById('status');
   el.textContent = msg; el.className = type; el.style.display = 'block';
-  if (type !== 'err') setTimeout(() => el.style.display = 'none', 5000);
+  if (!persist && type !== 'err') setTimeout(() => el.style.display = 'none', 5000);
 }
 
 function updateBadge() {
