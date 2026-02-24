@@ -55,6 +55,8 @@
     .rec-row .times { color: white; }
     .rec-row .del { color: #e74c3c; cursor: pointer; padding: 2px 6px; }
     .rec-row.submitted { opacity: 0.5; }
+    #config-link { margin-top: 16px; font-size: 0.78em; color: #555; }
+    #config-link a { color: #a0c4ff; }
     .badge {
       display: inline-block; background: #e74c3c;
       color: white; border-radius: 10px; font-size: 0.7em;
@@ -81,10 +83,16 @@
   <div id="records-list"></div>
 </div>
 
+<div id="config-link">
+  עובד: <strong id="display-worker"></strong> |
+  <a href="#" onclick="showConfig()">הגדרות</a>
+</div>
 
 <script>
 const ISUFIT = 'https://extisufit.ngsoft.com/isufit';
+let workerCode = localStorage.getItem('isufit_worker') || '';
 let loginOpened = false;
+document.getElementById('display-worker').textContent = workerCode || 'לא הוגדר';
 
 // ── Clock ──────────────────────────────────────────
 function tick() {
@@ -136,6 +144,11 @@ function punch(type) {
 
 // ── Submit all ─────────────────────────────────────
 async function submitAll() {
+  if (!workerCode) {
+    showStatus('⚠️ נא להגדיר קוד עובד בהגדרות', 'err');
+    showConfig();
+    return;
+  }
   const recs = getAllRecords();
   const pending = Object.entries(recs).filter(([,v]) => !v.submitted && (v.in || v.out));
   if (pending.length === 0) {
@@ -143,11 +156,8 @@ async function submitAll() {
     return;
   }
 
-  console.log('[isufit] submitAll called, loginOpened:', loginOpened, 'pending:', pending.length);
-
   if (!loginOpened) {
     const win = window.open(`${ISUFIT}/login.aspx`, 'isufit_submit');
-    console.log('[isufit] window.open login result:', win ? 'opened' : 'BLOCKED');
     if (!win) {
       showStatus('⚠️ נא לאפשר חלונות קופצים (popups) לאתר זה', 'err');
       return;
@@ -157,9 +167,7 @@ async function submitAll() {
     return;
   }
 
-  // Get reference to existing popup without navigating it away from Isufit
   const submitWin = window.open('', 'isufit_submit');
-  console.log('[isufit] submit popup ref:', submitWin ? 'ok' : 'BLOCKED', 'closed:', submitWin?.closed);
   if (!submitWin) {
     showStatus('⚠️ נא לאפשר חלונות קופצים (popups) לאתר זה', 'err');
     loginOpened = false;
@@ -171,20 +179,17 @@ async function submitAll() {
   let ok = 0, fail = 0;
   for (const [date, rec] of pending) {
     if (submitWin.closed) {
-      console.log('[isufit] popup was closed mid-submission');
       showStatus('⚠️ חלון השליחה נסגר. נא לנסות שוב', 'err');
       fail++;
       break;
     }
     if (rec.in) {
       const success = sendRecord(date, 'IN122', rec.in);
-      console.log('[isufit] sendRecord IN', date, rec.in, '→', success);
       if (success) ok++; else fail++;
       await sleep(1500);
     }
     if (rec.out) {
       const success = sendRecord(date, 'OUT122', rec.out);
-      console.log('[isufit] sendRecord OUT', date, rec.out, '→', success);
       if (success) ok++; else fail++;
       await sleep(1500);
     }
@@ -195,7 +200,7 @@ async function submitAll() {
   saveAllRecords(recs);
   renderRecords();
   document.getElementById('btn-sub').disabled = false;
-  console.log('[isufit] done. ok:', ok, 'fail:', fail, '— keeping popup open for inspection');
+  if (submitWin && !submitWin.closed) submitWin.close();
   loginOpened = false;
   if (fail === 0) {
     showStatus(`✅ נשלחו ${ok} רשומות — בדוק ב-Isufit שהנתונים עודכנו`, 'ok');
@@ -205,17 +210,13 @@ async function submitAll() {
 }
 
 function sendRecord(date, tbName, value) {
-  const url = `${ISUFIT}/ops/opSaveTBChange.aspx` +
-    `?forDate=${date}&tbName=${tbName}` +
-    `&newVal=${encodeURIComponent(value)}&caller=main`;
-  console.log('[isufit] sendRecord URL:', url);
   try {
     const form = document.createElement('form');
     form.method = 'GET';
     form.action = `${ISUFIT}/ops/opSaveTBChange.aspx`;
     form.target = 'isufit_submit';
     form.style.display = 'none';
-    [['forDate', date], ['tbName', tbName], ['newVal', value], ['caller', 'main']].forEach(([n, v]) => {
+    [['workerCode', workerCode], ['forDate', date], ['tbName', tbName], ['newVal', value], ['caller', 'main']].forEach(([n, v]) => {
       const inp = document.createElement('input');
       inp.type = 'hidden'; inp.name = n; inp.value = v;
       form.appendChild(inp);
@@ -225,7 +226,6 @@ function sendRecord(date, tbName, value) {
     form.remove();
     return true;
   } catch (e) {
-    console.error('[isufit] sendRecord error:', e);
     return false;
   }
 }
@@ -282,6 +282,16 @@ function deleteRecord(date) {
   renderRecords();
 }
 
+
+function showConfig() {
+  const code = prompt('קוד עובד (Worker Code):', workerCode);
+  if (code && code.trim()) {
+    workerCode = code.trim();
+    localStorage.setItem('isufit_worker', workerCode);
+    document.getElementById('display-worker').textContent = workerCode;
+    showStatus('✅ קוד עובד עודכן', 'ok');
+  }
+}
 
 // Init
 updateBadge();
