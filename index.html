@@ -143,8 +143,11 @@ async function submitAll() {
     return;
   }
 
+  console.log('[isufit] submitAll called, loginOpened:', loginOpened, 'pending:', pending.length);
+
   if (!loginOpened) {
     const win = window.open(`${ISUFIT}/login.aspx`, 'isufit_submit');
+    console.log('[isufit] window.open login result:', win ? 'opened' : 'BLOCKED');
     if (!win) {
       showStatus('⚠️ נא לאפשר חלונות קופצים (popups) לאתר זה', 'err');
       return;
@@ -154,9 +157,12 @@ async function submitAll() {
     return;
   }
 
-  const submitWin = window.open('about:blank', 'isufit_submit');
+  // Get reference to existing popup without navigating it away from Isufit
+  const submitWin = window.open('', 'isufit_submit');
+  console.log('[isufit] submit popup ref:', submitWin ? 'ok' : 'BLOCKED', 'closed:', submitWin?.closed);
   if (!submitWin) {
     showStatus('⚠️ נא לאפשר חלונות קופצים (popups) לאתר זה', 'err');
+    loginOpened = false;
     return;
   }
 
@@ -165,19 +171,22 @@ async function submitAll() {
   let ok = 0, fail = 0;
   for (const [date, rec] of pending) {
     if (submitWin.closed) {
+      console.log('[isufit] popup was closed mid-submission');
       showStatus('⚠️ חלון השליחה נסגר. נא לנסות שוב', 'err');
       fail++;
       break;
     }
     if (rec.in) {
       const success = sendRecord(date, 'IN122', rec.in);
+      console.log('[isufit] sendRecord IN', date, rec.in, '→', success);
       if (success) ok++; else fail++;
-      await sleep(1200);
+      await sleep(1500);
     }
     if (rec.out) {
       const success = sendRecord(date, 'OUT122', rec.out);
+      console.log('[isufit] sendRecord OUT', date, rec.out, '→', success);
       if (success) ok++; else fail++;
-      await sleep(1200);
+      await sleep(1500);
     }
     if (fail === 0) {
       recs[date].submitted = true;
@@ -186,6 +195,7 @@ async function submitAll() {
   saveAllRecords(recs);
   renderRecords();
   document.getElementById('btn-sub').disabled = false;
+  console.log('[isufit] done. ok:', ok, 'fail:', fail, 'closing popup');
   if (submitWin && !submitWin.closed) submitWin.close();
   loginOpened = false;
   if (fail === 0) {
@@ -196,6 +206,10 @@ async function submitAll() {
 }
 
 function sendRecord(date, tbName, value) {
+  const url = `${ISUFIT}/ops/opSaveTBChange.aspx` +
+    `?forDate=${date}&tbName=${tbName}` +
+    `&newVal=${encodeURIComponent(value)}&caller=main`;
+  console.log('[isufit] sendRecord URL:', url);
   try {
     const form = document.createElement('form');
     form.method = 'GET';
@@ -212,6 +226,7 @@ function sendRecord(date, tbName, value) {
     form.remove();
     return true;
   } catch (e) {
+    console.error('[isufit] sendRecord error:', e);
     return false;
   }
 }
