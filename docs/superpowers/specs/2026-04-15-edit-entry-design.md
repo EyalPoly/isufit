@@ -9,13 +9,12 @@ Add the ability to edit the in/out times of a saved attendance record directly i
 
 ## Row Layout
 
-Each non-submitted row gains a ✏️ edit icon next to the existing ✕ delete icon:
+Every row — submitted or pending — gains a ✏️ edit icon next to the existing ✕ delete icon:
 
 ```
 | 2026-04-14  |  🟢 09:00   🔴 17:30  |  ✏️  ✕  |
+| 2026-04-13 ✓ (submitted, dimmed)    |  ✏️  ✕  |
 ```
-
-Submitted rows retain only the ✕ (or none — they are already read-only today) and do **not** show ✏️.
 
 ## Edit Mode
 
@@ -45,7 +44,7 @@ Clicking ✗ restores the row to its previous display with no changes to localSt
 
 ## Constraints
 
-- Submitted rows: no ✏️ icon rendered; read-only.
+- Submitted rows are editable; editing one sets `submitted: false` so it gets re-submitted.
 - Only one row in edit mode at a time; opening a second automatically cancels the first.
 - Empty time inputs are stored as `''` (same as a missing punch), consistent with existing behaviour.
 
