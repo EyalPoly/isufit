@@ -244,6 +244,17 @@ function sendRecord(date, tbName, value) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+function calcDuration(inTime, outTime) {
+  if (!inTime || !outTime) return '';
+  const [inH,  inM]  = inTime.split(':').map(Number);
+  const [outH, outM] = outTime.split(':').map(Number);
+  const diff = (outH * 60 + outM) - (inH * 60 + inM);
+  if (diff <= 0) return '';
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
 // ── UI helpers ─────────────────────────────────────
 function showStatus(msg, type, persist) {
   const el = document.getElementById('status');
@@ -291,6 +302,8 @@ function renderRecords() {
     timesSpan.className = 'times';
     timesSpan.id = 'times-' + date;
     timesSpan.textContent = '🟢 ' + (r.in||'--') + ' \u00a0 🔴 ' + (r.out||'--');
+    const dur = calcDuration(r.in, r.out);
+    if (dur) timesSpan.append('\u00a0 \u23f1 ' + dur);
 
     const actionsSpan = document.createElement('span');
     actionsSpan.className = 'actions';
