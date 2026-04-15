@@ -100,6 +100,7 @@
 const ISUFIT = 'https://extisufit.ngsoft.com/isufit';
 let workerCode = localStorage.getItem('isufit_worker') || '';
 let loginOpened = false;
+let editingDate = null;
 document.getElementById('display-worker').textContent = workerCode || 'לא הוגדר';
 
 // ── Clock ──────────────────────────────────────────
@@ -290,6 +291,56 @@ function deleteRecord(date) {
   const recs = getAllRecords();
   delete recs[date];
   saveAllRecords(recs);
+  renderRecords();
+}
+
+function editRecord(date) {
+  if (editingDate) cancelEdit(editingDate);
+  editingDate = date;
+  const r = getAllRecords()[date];
+
+  const timesEl   = document.getElementById('times-'   + date);
+  const actionsEl = document.getElementById('actions-' + date);
+
+  const inInput  = document.createElement('input');
+  inInput.type   = 'time';
+  inInput.id     = 'edit-in-' + date;
+  inInput.value  = r.in  || '';
+
+  const outInput  = document.createElement('input');
+  outInput.type   = 'time';
+  outInput.id     = 'edit-out-' + date;
+  outInput.value  = r.out || '';
+
+  timesEl.textContent = '';
+  timesEl.append('\uD83D\uDFE2 ', inInput, '\u00a0 \uD83D\uDD34 ', outInput);
+
+  const saveBtn = document.createElement('span');
+  saveBtn.className   = 'save';
+  saveBtn.textContent = '\u2713';
+  saveBtn.onclick     = () => saveRecord(date);
+
+  const cancelBtn = document.createElement('span');
+  cancelBtn.className   = 'cancel';
+  cancelBtn.textContent = '\u2717';
+  cancelBtn.onclick     = () => cancelEdit(date);
+
+  actionsEl.textContent = '';
+  actionsEl.append(saveBtn, cancelBtn);
+}
+
+function saveRecord(date) {
+  const recs       = getAllRecords();
+  recs[date].in    = document.getElementById('edit-in-'  + date).value;
+  recs[date].out   = document.getElementById('edit-out-' + date).value;
+  recs[date].submitted = false;
+  editingDate      = null;
+  saveAllRecords(recs);
+  renderRecords();
+}
+
+function cancelEdit(date) {
+  editingDate = null;
   renderRecords();
 }
 
