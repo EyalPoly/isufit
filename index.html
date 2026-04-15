@@ -268,20 +268,46 @@ function toggleRecords() {
 function renderRecords() {
   const recs = getAllRecords();
   const list = document.getElementById('records-list');
-  list.innerHTML = '';
+  list.textContent = '';
   const sorted = Object.keys(recs).sort().reverse();
   if (sorted.length === 0) {
-    list.innerHTML = '<div class="rec-row" style="color:#666">אין רשומות</div>';
+    const empty = document.createElement('div');
+    empty.className = 'rec-row';
+    empty.style.color = '#666';
+    empty.textContent = 'אין רשומות';
+    list.appendChild(empty);
     return;
   }
   for (const date of sorted) {
     const r = recs[date];
     const row = document.createElement('div');
     row.className = 'rec-row' + (r.submitted ? ' submitted' : '');
-    row.innerHTML = `
-      <span class="date">${date} ${r.submitted ? '✓' : ''}</span>
-      <span class="times">🟢 ${r.in||'--'} &nbsp; 🔴 ${r.out||'--'}</span>
-      <span class="del" onclick="deleteRecord('${date}')">✕</span>`;
+
+    const dateSpan = document.createElement('span');
+    dateSpan.className = 'date';
+    dateSpan.textContent = date + (r.submitted ? ' ✓' : '');
+
+    const timesSpan = document.createElement('span');
+    timesSpan.className = 'times';
+    timesSpan.id = 'times-' + date;
+    timesSpan.textContent = '🟢 ' + (r.in||'--') + ' \u00a0 🔴 ' + (r.out||'--');
+
+    const actionsSpan = document.createElement('span');
+    actionsSpan.className = 'actions';
+    actionsSpan.id = 'actions-' + date;
+
+    const editSpan = document.createElement('span');
+    editSpan.className = 'edit';
+    editSpan.textContent = '✏️';
+    editSpan.onclick = () => editRecord(date);
+
+    const delSpan = document.createElement('span');
+    delSpan.className = 'del';
+    delSpan.textContent = '✕';
+    delSpan.onclick = () => deleteRecord(date);
+
+    actionsSpan.append(editSpan, delSpan);
+    row.append(dateSpan, timesSpan, actionsSpan);
     list.appendChild(row);
   }
 }
