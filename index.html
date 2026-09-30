@@ -89,20 +89,28 @@
 <button class="btn" id="btn-fill" onclick="fillEmptyDays()">🎲 מלא ימים ריקים</button>
 
 <div id="records-panel">
-  <h3>רשומות שמורות</h3>
+  <h3 style="display:flex;justify-content:space-between;align-items:center;">
+    <span>רשומות שמורות</span>
+    <span onclick="clearAllRecords()" style="cursor:pointer;font-size:0.8em;color:#e74c3c;">🗑️ נקה הכל</span>
+  </h3>
   <div id="records-list"></div>
 </div>
 
 <div id="config-link">
   עובד: <strong id="display-worker"></strong> |
-  <a href="#" onclick="showConfig()">הגדרות</a>
+  <a href="#" onclick="showConfig()">הגדרות</a> |
+  <a href="#" id="bookmarklet-link" title="גרור לסרגל הסימניות של הדפדפן">📌 סימניית שליפה</a>
 </div>
 
 <script>
 const ISUFIT = 'https://extisufit.ngsoft.com/isufit';
+const ISUFIT_CALENDAR_URL = `${ISUFIT}/MainPage.aspx`;
+const REMOTE_STATUS_KEY = 'isufit_remote_status';
+const REMOTE_STATUS_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 let workerCode = localStorage.getItem('isufit_worker') || '';
 let loginOpened = false;
 let editingDate = null;
+let pendingFill = false;
 document.getElementById('display-worker').textContent = workerCode || 'לא הוגדר';
 
 // ── Clock ──────────────────────────────────────────
@@ -134,6 +142,19 @@ function getAllRecords() {
 function saveAllRecords(obj) {
   localStorage.setItem('isufit_records', JSON.stringify(obj));
   updateBadge();
+}
+function getRemoteStatus() {
+  return JSON.parse(localStorage.getItem(REMOTE_STATUS_KEY) || 'null');
+}
+function saveRemoteStatus(status) {
+  localStorage.setItem(REMOTE_STATUS_KEY, JSON.stringify(status));
+}
+function remoteStatusIsFresh(status, monthKey) {
+  // An empty result is far more likely to mean detection failed than that
+  // literally no day is marked, so never trust it as "done" — always retry.
+  return !!status && status.month === monthKey
+    && Object.keys(status.days).length > 0
+    && (Date.now() - status.fetchedAt) < REMOTE_STATUS_MAX_AGE_MS;
 }
 
 // ── Punch ──────────────────────────────────────────
@@ -335,6 +356,13 @@ function deleteRecord(date) {
   renderRecords();
 }
 
+function clearAllRecords() {
+  if (!confirm('למחוק את כל הרשומות השמורות? הפעולה בלתי הפיכה.')) return;
+  saveAllRecords({});
+  renderRecords();
+  showStatus('🗑️ כל הרשומות נמחקו', 'ok');
+}
+
 function editRecord(date) {
   if (editingDate) cancelEdit(editingDate);
   editingDate = date;
@@ -386,7 +414,35 @@ function cancelEdit(date) {
 }
 
 
+function currentMonthKey() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;
+}
+
+// Entry point for the fill button. If we don't have fresh data on which
+// days are already occupied on the real Isufit site (symbol days like
+// sick/vacation, or days that already have hours filled in there), we
+// open the site's calendar and wait for the bookmarklet to report back
+// via postMessage before actually filling — see the message listener below.
 function fillEmptyDays() {
+  const monthKey = currentMonthKey();
+  const remote = getRemoteStatus();
+  if (remoteStatusIsFresh(remote, monthKey)) {
+    runFill(remote.days);
+    return;
+  }
+
+  const win = window.open(ISUFIT_CALENDAR_URL, 'isufit_submit');
+  if (!win) {
+    showStatus('⚠️ נא לאפשר חלונות קופצים (popups) לאתר זה', 'err');
+    return;
+  }
+  pendingFill = true;
+  showStatus('📋 פתחתי את לוח הנוכחות — לחץ שם על הסימנייה "📌 סימניית שליפה", והמילוי ימשיך אוטומטית', 'info', true);
+}
+
+function runFill(remoteDays) {
+  remoteDays = remoteDays || {};
   const recs = getAllRecords();
   const now = new Date();
   const year = now.getFullYear();
@@ -401,7 +457,7 @@ function fillEmptyDays() {
   for (const d = new Date(year, month, 1); toKey(d) <= todayStr; d.setDate(d.getDate() + 1)) {
     const day = d.getDay();
     const key = toKey(d);
-    if (day === 5 || day === 6 || recs[key]) continue;
+    if (day === 5 || day === 6 || recs[key] || remoteDays[key]) continue;
 
     const enterMin = 450 + Math.floor(Math.random() * 121);
     const exitLow  = Math.max(960,  enterMin + 480);
@@ -434,8 +490,201 @@ function showConfig() {
   }
 }
 
+// ── Isufit calendar bookmarklet ─────────────────────
+// Ran manually by the user while the Isufit calendar page (opened via
+// fillEmptyDays above) is the active tab. It reads that page's own DOM
+// (same-origin there, so no CORS issue) and posts the result back to
+// this app's window via postMessage.
+//
+// MainPage.aspx is a shell page — the actual per-day grid (table#centerTable,
+// rows <tr id="TR2026-08-4">) loads inside <iframe id="mainTableFrame">, not
+// in the top document. Each row's <select name="...SML122"> holds the day's
+// symbol (option value "0" = none; otherwise its label text contains the
+// same words mapSymbolToStatus checks for), and IN*/OUT* inputs hold any
+// hours already worked.
+function buildBookmarkletCode() {
+  const targetOrigin = (location.protocol === 'file:' || location.origin === 'null')
+    ? '*' : location.origin;
+
+  const src = `(function(){
+    function mapSymbolToStatus(text) {
+      if (!text) return null;
+      if (text.indexOf('מחלה') !== -1) return 'sick';
+      if (text.indexOf('חופש') !== -1) return 'vacation';
+      if (text.indexOf('מילואים') !== -1) return 'reserve';
+      if (text.indexOf('חג') !== -1) return 'holiday';
+      return null;
+    }
+
+    // The grid is inside <iframe id="mainTableFrame">, not the top document.
+    function getGridDocument() {
+      var frame = document.getElementById('mainTableFrame');
+      if (!frame) return null;
+      try {
+        return frame.contentDocument || frame.contentWindow.document;
+      } catch (e) {
+        return null; // cross-origin or not yet loaded
+      }
+    }
+
+    // Each day is <tr id="TR2026-08-4"> (day not zero-padded). Symbol lives
+    // in a <select name="...SML122"> whose selected option's label (e.g.
+    // "902-ש.מחלה") already contains the words mapSymbolToStatus checks for.
+    // Worked hours live in the IN*/OUT* inputs for up to 3 shifts.
+    var HOUR_FIELD_SUFFIXES = ['IN122', 'OUT122', 'IN222', 'OUT222', 'IN322', 'OUT322'];
+
+    // Single source of truth for "what is this row" — both extractDays and
+    // the debug scan below call this, so they can never silently disagree.
+    function classifyRow(row) {
+      var select = row.querySelector('select[name$="SML122"]');
+      var selectedOpt = select ? select.options[select.selectedIndex] : null;
+      var status = (selectedOpt && selectedOpt.value !== '0')
+        ? mapSymbolToStatus(selectedOpt.text)
+        : null;
+
+      if (!status) {
+        for (var j = 0; j < HOUR_FIELD_SUFFIXES.length; j++) {
+          var input = row.querySelector('input[name$="' + HOUR_FIELD_SUFFIXES[j] + '"]');
+          if (input && input.value) { status = 'filled'; break; }
+        }
+      }
+      return { status: status, select: select, selectedOpt: selectedOpt };
+    }
+
+    // One pass, one querySelectorAll, one loop — builds both the real result
+    // (days) and the debug info from literally the same iteration, so there
+    // is no way for "what we found" and "what we'd report as a diagnostic"
+    // to ever disagree with each other.
+    function scanGrid(gridDoc) {
+      var rows = gridDoc.querySelectorAll('tr[id^="TR"]');
+      var days = {};
+      var debug = { rowCount: rows.length, nonDefaultCount: 0 };
+      var firstNonDefault = null;
+
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var result = classifyRow(row);
+
+        if (result.status && !firstNonDefault) {
+          firstNonDefault = { row: row, select: result.select, selOpt: result.selectedOpt, status: result.status };
+        }
+        if (result.status) debug.nonDefaultCount++;
+
+        var m = row.id.match(/^TR(\\d{4})-(\\d{2})-(\\d{1,2})$/);
+        if (!m) continue;
+        var date = m[1] + '-' + m[2] + '-' + (m[3].length === 1 ? '0' + m[3] : m[3]);
+        if (result.status) days[date] = result.status;
+      }
+
+      if (firstNonDefault) {
+        debug.rowId = firstNonDefault.row.id;
+        debug.status = firstNonDefault.status;
+        debug.selectName = firstNonDefault.select ? firstNonDefault.select.name : '';
+        debug.selectedValue = firstNonDefault.selOpt ? firstNonDefault.selOpt.value : '';
+        debug.selectedText = firstNonDefault.selOpt ? firstNonDefault.selOpt.text : '';
+      }
+      return { days: days, debug: debug };
+    }
+
+    // Feedback goes back to the app via postMessage rather than alert() —
+    // repeated alert()s on this tab get silently blocked by Chrome after a
+    // few in a row ("Prevent this page from creating additional dialogs").
+    if (!window.opener) {
+      return; // can't report anywhere meaningful if not opened by the app
+    }
+
+    // Confirmed via HAR capture: MainPage.aspx is a shell — the iframe only
+    // gets the real grid via a SEPARATE request to MainTable.aspx that fires
+    // ~1.5s after MainPage.aspx itself loads, then takes another ~1.5s to
+    // fully settle (its own CSS/JS). Retry generously to cover that.
+    function attempt(retriesLeft) {
+      var gridDoc = getGridDocument();
+      if (!gridDoc) {
+        if (retriesLeft > 0) { setTimeout(function () { attempt(retriesLeft - 1); }, 500); return; }
+        window.opener.postMessage({ source: 'isufit-bookmarklet', error: 'no-grid-frame' }, '${targetOrigin}');
+        return;
+      }
+      var result = scanGrid(gridDoc);
+      var days = result.days;
+      var count = Object.keys(days).length;
+      if (count === 0 && retriesLeft > 0) {
+        setTimeout(function () { attempt(retriesLeft - 1); }, 500);
+        return;
+      }
+
+      var payload = { source: 'isufit-bookmarklet', days: days };
+      if (count === 0) {
+        payload.debug = result.debug;
+      } else {
+        // Assumes the calendar page is currently showing the real-world
+        // current month — true for the fillEmptyDays flow that opens it.
+        var now = new Date();
+        payload.month = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+      }
+      window.opener.postMessage(payload, '${targetOrigin}');
+    }
+
+    attempt(16); // up to ~8s total — comfortably covers the observed ~3s gap
+  })();`;
+
+  // Note: do NOT collapse whitespace/newlines here — the `//` comments
+  // above would swallow the code that follows them on the same line.
+  return 'javascript:' + encodeURIComponent(src);
+}
+
+function initBookmarkletLink() {
+  const link = document.getElementById('bookmarklet-link');
+  link.href = buildBookmarkletCode();
+  link.onclick = (e) => {
+    e.preventDefault();
+    showStatus('גרור קישור זה לסרגל הסימניות של הדפדפן, ולחץ עליו כשאתה בלוח הנוכחות של Isufit', 'info', true);
+  };
+}
+
+// ── Receive data pulled by the bookmarklet ──────────
+window.addEventListener('message', (event) => {
+  if (event.origin !== new URL(ISUFIT).origin) return;
+  const data = event.data;
+  if (!data || data.source !== 'isufit-bookmarklet') return;
+
+  if (data.error) {
+    pendingFill = false;
+    showStatus(`⚠️ הסימנייה נכשלה: ${data.error}`, 'err', true);
+    return;
+  }
+  if (!data.days) return;
+
+  const count = Object.keys(data.days).length;
+
+  // DEBUG: 0 days found — show the diagnostic instead of silently
+  // resuming the fill with empty skip data (that's what caused the
+  // earlier bug where symbol days got filled with fake hours).
+  if (count === 0 && data.debug) {
+    pendingFill = false;
+    console.log('bookmarklet debug:', data.debug);
+    const d = data.debug;
+    showStatus(
+      `DEBUG rows=${d.rowCount} nonDefault=${d.nonDefaultCount} ` +
+      `firstRowId="${d.rowId || ''}" status="${d.status || ''}" selectName="${d.selectName || ''}" ` +
+      `selectedValue="${d.selectedValue || ''}" selectedText="${d.selectedText || ''}"`,
+      'err', true
+    );
+    return;
+  }
+
+  saveRemoteStatus({ month: data.month, fetchedAt: Date.now(), days: data.days });
+
+  if (pendingFill) {
+    pendingFill = false;
+    runFill(data.days);
+  } else {
+    showStatus(`✅ עודכנו נתוני האתר (${count} ימים מסומנים)`, 'ok');
+  }
+});
+
 // Init
 updateBadge();
+initBookmarkletLink();
 </script>
 </body>
 </html>
